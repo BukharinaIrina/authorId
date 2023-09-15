@@ -29,15 +29,18 @@ fun main() {
                 val posts = getPosts(client)
                     .map { post ->
                         async {
-                            PostWithAuthorAndComments(post,
+                            PostWithAuthorAndComments(
+                                post,
                                 getAuthor(client, post.authorId),
                                 getComments(client, post.id)
                                     .map { comment ->
-                                        CommentWithAuthor(
-                                            comment,
-                                            getAuthor(client, comment.authorId)
-                                        )
-                                    }
+                                        async {
+                                            CommentWithAuthor(
+                                                comment,
+                                                getAuthor(client, comment.authorId)
+                                            )
+                                        }
+                                    }.awaitAll()
                             )
                         }
                     }.awaitAll()
@@ -133,7 +136,6 @@ data class Attachment(
     val description: String,
     val type: AttachmentType = AttachmentType.IMAGE
 )
-
 enum class AttachmentType {
     IMAGE
 }
